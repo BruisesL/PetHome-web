@@ -1,0 +1,4 @@
+# Project exclude paths
+/pethome-admin-web/node_modules/
+/pethome-web.iml
+/.idea/
