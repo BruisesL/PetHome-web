@@ -9,6 +9,7 @@ import Page4 from './views/nav2/Page4.vue'
 import Page5 from './views/nav2/Page5.vue'
 import Page6 from './views/nav3/Page6.vue'
 import echarts from './views/charts/echarts.vue'
+import department from "./views/org/department";
 
 let routes = [
     {
@@ -37,13 +38,12 @@ let routes = [
     {
         path: '/',
         component: Home,
-        name: '导航一',
+        name: '组织管理',
         iconCls: 'el-icon-message',//图标样式class
         children: [
-            { path: '/main', component: Main, name: '主页', hidden: true },
-            { path: '/table', component: Table, name: 'Table' },
-            { path: '/form', component: Form, name: 'Form' },
-            { path: '/user', component: user, name: '列表' },
+            { path: '/department', component: department, name: '部门管理' },
+            { path: '/employee', component: department, name: '员工管理' },
+            { path: '/shop', component: department, name: '店铺管理' },
         ]
     },
     {
