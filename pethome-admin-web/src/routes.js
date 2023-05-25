@@ -10,6 +10,7 @@ import Page5 from './views/nav2/Page5.vue'
 import Page6 from './views/nav3/Page6.vue'
 import echarts from './views/charts/echarts.vue'
 import department from "./views/org/department";
+import shop from "./views/org/shop";
 
 let routes = [
     {
@@ -43,7 +44,7 @@ let routes = [
         children: [
             { path: '/department', component: department, name: '部门管理' },
             { path: '/employee', component: department, name: '员工管理' },
-            { path: '/shop', component: department, name: '店铺管理' },
+            { path: '/shop', component: shop, name: '店铺管理' },
         ]
     },
     {

@@ -7,7 +7,7 @@
           <el-input v-model="keyword" placeholder="关键字"></el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" v-on:click="getDepartmentsBySearch">查询</el-button>
+          <el-button type="primary" v-on:click="getShopsBySearch">查询</el-button>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleAdd">新增</el-button>
@@ -16,31 +16,32 @@
     </el-col>
 
     <!--列表-->
-    <el-table :data="departments" highlight-current-row v-loading="listLoading" @selection-change="selsChange"
+    <el-table :data="shops" highlight-current-row v-loading="listLoading" @selection-change="selsChange"
               style="width: 100%;">
       <el-table-column type="selection" width="55">
       </el-table-column>
       <el-table-column type="index" label="序号" width="60">
       </el-table-column>
-      <el-table-column prop="name" label="部门名称" width="120" sortable>
+      <el-table-column prop="name" label="店铺名称" width="200" sortable>
       </el-table-column>
-      <el-table-column prop="sn" label="部门编码" width="100" sortable>
+      <el-table-column prop="tel" label="店铺电话" width="200" sortable>
       </el-table-column>
-      <el-table-column label="状态" width="100" sortable>
+      <el-table-column prop="registerTime" label="注册时间" width="180" sortable>
+      </el-table-column>
+      <el-table-column label="状态" width="120" sortable>
         <template scope="scope">
           <span v-if="scope.row.state === 0" style="color: red">禁用</span>
           <span v-else style="color: green">启用</span>
         </template>
       </el-table-column>
-      <el-table-column prop="manager.username" label="部门经理" width="120" sortable>
+      <el-table-column prop="admin.username" label="店铺经理" width="120" sortable>
       </el-table-column>
-      <el-table-column label="上级部门" min-width="180" sortable>
+      <el-table-column prop="logo" label="店铺图标" min-width="180" sortable>
         <template scope="scope">
-          <span v-if="scope.row.parentId == null" style="color: hotpink">顶级部门</span>
-          <span v-else>{{ scope.row.parent.name }}</span>
+          <el-image :src="'http://service-file-primary.java.itsource.cn/'+scope.row.logo" style="weight: 40px; height: 40px;"></el-image>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="150">
+      <el-table-column label="操作" width="160">
         <template scope="scope">
           <el-button size="small" @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
           <el-button type="danger" size="small" @click="handleDel(scope.$index, scope.row)">删除</el-button>
@@ -62,11 +63,11 @@
     <!--新增&编辑界面-->
     <el-dialog :title="title" :visible.sync="saveFormVisible" :close-on-click-modal="false">
       <el-form :model="saveForm" label-width="80px" :rules="saveFormRules" ref="saveForm">
-        <el-form-item label="部门名称" prop="name">
+        <el-form-item label="店铺名称" prop="name">
           <el-input v-model="saveForm.name" auto-complete="off"></el-input>
         </el-form-item>
-        <el-form-item label="部门编码" prop="sn">
-          <el-input v-model="saveForm.sn" auto-complete="off"></el-input>
+        <el-form-item label="店铺电话" prop="tel">
+          <el-input v-model="saveForm.tel" auto-complete="off"></el-input>
         </el-form-item>
         <el-form-item label="状态">
           <el-radio-group v-model="saveForm.state">
@@ -74,8 +75,11 @@
             <el-radio class="radio" :label="0">禁用</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="部门经理">
-          <el-select v-model="saveForm.managerId" placeholder="请选择">
+        <el-form-item label="店铺地址" prop="address">
+          <el-input v-model="saveForm.address" auto-complete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="管理员">
+          <el-select v-model="saveForm.adminId" placeholder="请选择">
             <el-option
                 v-for="item in employees"
                 :key="item.id"
@@ -86,16 +90,19 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="上级部门">
-          <el-cascader
-              v-model="saveForm.parentId"
-              :options="tree"
-              :props="{
-                checkStrictly: true,
-                label: 'name',
-                value: 'id'
-              }"
-              clearable></el-cascader>
+        <!--文件上传-->
+        <el-form-item prop="logo" label="店铺Logo">
+          <el-upload
+              class="upload-demo"
+              action="http://localhost:8080/fastdfs/"
+              :on-preview="handlePreview"
+              :on-remove="handleRemove"
+              :on-success="handleSuccess"
+              :file-list="fileList"
+              list-type="picture">
+            <el-button size="small" type="primary">点击上传</el-button>
+            <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
+          </el-upload>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -108,13 +115,13 @@
 </template>
 
 <script>
+import util from '../../common/js/util'
 
 export default {
   data() {
     return {
-      departments: [],
+      shops: [],
       employees: [],
-      tree: [],
       keyword: '',
       total: 0,
       pageSize: 5,
@@ -127,33 +134,61 @@ export default {
       // 新增&编辑界面是否显示
       saveFormVisible: false,
       saveLoading: false,
+      fileList: [],
       saveFormRules: {
         name: [
-          {required: true, message: '请输入部门名称', trigger: 'blur'}
+          {required: true, message: '请输入店铺名称', trigger: 'blur'}
         ],
-        sn: [
-          {required: true, message: '请输入部门编码', trigger: 'blur'}
+        tel: [
+          {required: true, message: '请输入店铺电话', trigger: 'blur'}
         ]
       },
       // 编辑界面数据
       saveForm: {
         id: null,
         name: '',
-        sn: '',
+        tel: '',
         state: 0,
-        managerId: null,
-        parentId: null
+        address:'',
+        logo: null,
+        adminId: null
       }
     }
   },
   methods: {
+    //文件上传成功回调
+    handleSuccess(response, file, fileList) {
+      this.saveForm.logo = response.data;
+    },
+    //文件删除
+    handleRemove(file, fileList) {
+      var filePath = file.response.data;
+      this.$http.delete("fastdfs?path=" + filePath)
+          .then(res => {
+            if (res.data.success) {
+              this.$message({
+                message: '删除成功!',
+                type: 'success'
+              });
+            } else {
+              this.$message({
+                message: '删除失败!',
+                type: 'error'
+              });
+            }
+          })
+    },
+    //图片预览
+    handlePreview(file) {
+      console.log(file);
+    },
     // 分页点击事件
     handleCurrentChange(val) {
       this.currentPage = val;
-      this.getDepartments();
+      this.getShops();
     },
     // 获取用户列表
-    getDepartments() {
+    getShops() {
       let para = {
         currentPage: this.currentPage,
         pageSize: this.pageSize,
@@ -162,10 +197,10 @@ export default {
       // 开启忙等
       this.listLoading = true;
       // 发送异步请求
-      this.$http.post("/department", para)
+      this.$http.post("/shop", para)
           .then(res => {
             this.total = res.data.total
-            this.departments = res.data.data
+            this.shops = res.data.data
 
             // 关闭忙等
             this.listLoading = false
@@ -177,9 +212,9 @@ export default {
 
     },
     // 条件查询，设置当前页为第一页
-    getDepartmentsBySearch() {
+    getShopsBySearch() {
       this.currentPage = 1;
-      this.getDepartments();
+      this.getShops();
     },
     // 删除
     handleDel: function (index, row) {
@@ -188,7 +223,7 @@ export default {
       }).then(() => {
         this.listLoading = true;
         //NProgress.start();
-        this.$http.delete("department/" + row.id)
+        this.$http.delete("shop/" + row.id)
             .then(res => {
               let result = res.data
               // 判断后端删除是否成功
@@ -200,7 +235,7 @@ export default {
                 if (maxPage === this.currentPage && (this.total - 1) % this.pageSize === 0 && this.currentPage > 1) {
                   this.currentPage = this.currentPage - 1
                 }
-                this.getDepartments();
+                this.getShops();
               } else {
                 // 后端返回删除失败
                 this.$message.error(result.message)
@@ -221,7 +256,7 @@ export default {
       }).then(() => {
         this.listLoading = true;
         //NProgress.start();
-        this.$http.patch("/department", ids)
+        this.$http.patch("/shop", ids)
             .then(res => {
               let result = res.data
               // 判断后端删除是否成功
@@ -233,7 +268,7 @@ export default {
                 if (maxPage === this.currentPage && (this.total - ids.length) % this.pageSize === 0 && this.currentPage > 1) {
                   this.currentPage = this.currentPage - 1
                 }
-                this.getDepartments();
+                this.getShops();
               } else {
                 // 后端返回删除失败
                 this.$message.error(result.message)
@@ -250,9 +285,9 @@ export default {
     handleEdit: function (index, row) {
       this.saveFormVisible = true;
       this.title = '编辑';
-      this.saveForm = Object.assign({}, row);
+      this.saveForm = Object.assign({}, row)
     },
-    //显示新增界面
+    // 显示新增界面
     handleAdd: function () {
       this.saveFormVisible = true;
       this.title = '新增';
@@ -265,11 +300,7 @@ export default {
           this.$confirm('确认提交吗？', '提示', {}).then(() => {
             this.saveLoading = true;
             let para = Object.assign({}, this.saveForm);
-            // 处理回显上级部门ID数据为数组的问题
-            if (para.parentId && para.parentId instanceof Array) {
-              para.parentId = para.parentId[para.parentId.length - 1]
-            }
-            this.$http.put("/department", para)
+            this.$http.put("/shop", para)
                 .then(res => {
                   if (res.data.success) {
                     this.$message.success("操作成功")
@@ -278,8 +309,7 @@ export default {
                   }
                   this.saveLoading = false;
                   this.saveFormVisible = false;
-                  this.currentPage = 1;
-                  this.getDepartments();
+                  this.getShops();
                 })
                 .catch(res => {
                   this.$message.error("网络繁忙，请稍后重试！")
@@ -301,22 +331,11 @@ export default {
           .catch(res => {
             this.$message.error("网络繁忙，请稍后重试！")
           })
-    },
-    // 获取部门树
-    getTree() {
-      this.$http.get("/department/tree")
-          .then(res => {
-            this.tree = res.data;
-          })
-          .catch(res => {
-            this.$message.error("网络繁忙，请稍后重试")
-          })
     }
   },
   mounted() {
-    this.getDepartments();
+    this.getShops();
     this.getEmployees();
-    this.getTree();
   }
 }
 
