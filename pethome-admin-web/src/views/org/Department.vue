@@ -188,7 +188,7 @@ export default {
       }).then(() => {
         this.listLoading = true;
         //NProgress.start();
-        this.$http.delete("department/" + row.id)
+        this.$http.delete("/department/" + row.id)
             .then(res => {
               let result = res.data
               // 判断后端删除是否成功

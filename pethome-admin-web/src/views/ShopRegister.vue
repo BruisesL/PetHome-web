@@ -20,7 +20,8 @@
         auto-complete="off"  - 关闭自动完成
         placeholder="请输入店铺名称！" - 提示语
     -->
-    <el-form :model="shop" ref="shopForm" :rules="formRules" label-position="left" label-width="100px" class="demo-ruleForm login-container">
+    <el-form :model="shop" ref="shopForm" :rules="formRules" label-position="left" label-width="100px"
+             class="demo-ruleForm login-container">
       <h3 class="title">店铺入驻</h3>
       <el-form-item prop="name" label="名称">
         <el-input type="text" v-model="shop.name" auto-complete="off" placeholder="请输入店铺名称！"></el-input>
@@ -56,13 +57,15 @@
         <el-input type="text" v-model="shop.admin.email" auto-complete="off" placeholder="请输入邮件！"></el-input>
       </el-form-item>
       <el-form-item prop="admin.password" label="密码">
-        <el-input type="password" v-model="shop.admin.password" auto-complete="off" placeholder="请输入密码！"></el-input>
+        <el-input type="password" v-model="shop.admin.password" auto-complete="off"
+                  placeholder="请输入密码！"></el-input>
       </el-form-item>
       <el-form-item prop="admin.comfirmPassword" label="确认密码">
-        <el-input type="password" v-model="shop.admin.comfirmPassword" auto-complete="off" placeholder="请输入确认密码！"></el-input>
+        <el-input type="password" v-model="shop.admin.comfirmPassword" auto-complete="off"
+                  placeholder="请输入确认密码！"></el-input>
       </el-form-item>
       <el-form-item style="width:100%;">
-        <el-button type="primary" style="width:100%;" @click.native.prevent="settledIn" >入驻</el-button>
+        <el-button type="primary" style="width:100%;" @click.native.prevent="settledIn">入驻</el-button>
       </el-form-item>
     </el-form>
     <!--百度地图-->
@@ -107,60 +110,59 @@ export default {
 
     return {
       //百度地图相关数据：
-      keyword:'',
-      dialogVisable:false,
+      keyword: '',
+      dialogVisable: false,
 
       //文件上传相关数据
       fileList: [],
 
       //店铺入驻表单数据
       shop: {
-        admin:{
-          username:"",
-          phone:"",
-          email:"",
-          password:"",
-          comfirmPassword:""
+        admin: {
+          username: "",
+          phone: "",
+          email: "",
+          password: "",
+          comfirmPassword: ""
         },
         name: '',
         tel: '',
         address: '',
-        logo:'',
+        logo: '',
       },
 
       //表单验证规则
       formRules: {
         name: [
-          { required: true, message: '请输入店铺名称!', trigger: 'blur' }
+          {required: true, message: '请输入店铺名称!', trigger: 'blur'}
         ],
         tel: [
-          { required: true, message: '请输入店铺座机!', trigger: 'blur' }
+          {required: true, message: '请输入店铺座机!', trigger: 'blur'}
         ],
         address: [
-          { required: true, message: '请输入店铺地址!', trigger: 'blur' }
+          {required: true, message: '请输入店铺地址!', trigger: 'blur'}
         ],
         'admin.phone': [
-          { required: true, message: '请输入手机号!', trigger: 'blur' }
+          {required: true, message: '请输入手机号!', trigger: 'blur'}
         ],
         // logo: [
         //     { required: true, message: '请输入店铺logo!', trigger: 'blur' }
         // ],
         'admin.email': [
-          { type: 'email',required: true, message: '请输入邮箱!', trigger: 'blur' }
+          {type: 'email', required: true, message: '请输入邮箱!', trigger: 'blur'}
         ],
         'admin.username': [
-          { required: true, message: '请输入账号!', trigger: 'blur' }
+          {required: true, message: '请输入账号!', trigger: 'blur'}
         ],
         'admin.password': [
-          { required: true, message: '请输入密码!', trigger: 'blur' }
+          {required: true, message: '请输入密码!', trigger: 'blur'}
         ],
         'admin.comfirmPassword': [
-          {required: true,validator: validatePass2, trigger: 'blur' } //调用自定义校验规则
+          {required: true, validator: validatePass2, trigger: 'blur'} //调用自定义校验规则
         ]
       }
     };
   },
-  //方法
   methods: {
 
     //百度地址的业务逻辑
@@ -176,18 +178,18 @@ export default {
     // },
 
     //文件上传的业务逻辑
-    handleSuccess(response, file, fileList){
+    handleSuccess(response, file, fileList) {
       this.shop.logo = response.data;
     },
 
     //文件删除的业务逻辑
     handleRemove(file, fileList) {
-      var filePath =file.response.data;
-      this.$http.delete("/fastdfs/?path="+filePath)
-          .then(res=>{
-            if(res.data.success){
+      var filePath = file.response.data;
+      this.$http.delete("/fastdfs/?path=" + filePath)
+          .then(res => {
+            if (res.data.success) {
               this.$message.success("删除成功!");
-            }else{
+            } else {
               this.$message.error("删除失败!");
             }
           })
@@ -199,7 +201,7 @@ export default {
     },
 
     //点击入驻按钮的业务逻辑
-    settledIn(){
+    settledIn() {
       this.$refs.shopForm.validate((valid) => {
         //校验表单成功后才做一下操作
         if (valid) {
@@ -207,8 +209,8 @@ export default {
             //拷贝后面对象的值到新对象,防止后面代码改动引起模型变化
             let para = Object.assign({}, this.shop); //shop本身这个参数里面就有店铺和管理员信息
             //为了后台好接收，封装一个对象放到里面
-            this.$http.post("/shop/settlement",para).then((res) => {
-              if(res.data.success){
+            this.$http.post("/shop/settlement", para).then((res) => {
+              if (res.data.success) {
                 this.$message({
                   message: '操作成功!',
                   type: 'success'
@@ -216,9 +218,8 @@ export default {
                 //重置表单
                 this.$refs['shopForm'].resetFields();
                 //跳转登录页面
-                this.$router.push({ path: '/login' });
-              }
-              else{
+                this.$router.push({path: '/login'});
+              } else {
                 this.$message({
                   message: res.data.message,
                   type: 'error'
@@ -228,6 +229,27 @@ export default {
           });
         }
       })
+    },
+    getActiveFailedShop(id) {
+      debugger
+      this.$http.get("/shop/" + id)
+          .then(res => {
+            debugger
+            this.shop = res.data;
+          })
+          .catch(res => {
+            debugger
+            this.$message.error("网络繁忙，请稍后重试！");
+          })
+    }
+  },
+  mounted() {
+    // 先拿到访问地址中的shopId
+    let url = location.href;
+    let shopId = url.split("=")[1];
+    if (shopId != null) {
+      debugger
+      this.getActiveFailedShop(shopId);
     }
   }
 }
@@ -245,11 +267,13 @@ export default {
   background: #fff;
   border: 1px solid #eaeaea;
   box-shadow: 0 0 25px #cac6c6;
+
   .title {
     margin: 0px auto 40px auto;
     text-align: center;
     color: #505458;
   }
+
   .remember {
     margin: 0px 0px 35px 0px;
   }
@@ -259,7 +283,8 @@ export default {
   width: 100%;
   height: 300px;
 }
-.searchinput{
+
+.searchinput {
   width: 300px;
   box-sizing: border-box;
   padding: 9px;

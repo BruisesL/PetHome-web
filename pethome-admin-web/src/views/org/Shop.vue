@@ -10,7 +10,15 @@
           <el-button type="primary" v-on:click="getShopsBySearch">查询</el-button>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleAdd">新增</el-button>
+          <el-button type="primary" @click="exportShop">导出</el-button>
+        </el-form-item>
+        <el-form-item>
+          <!-- 默认name="file" -->
+          <el-upload class="upload-demo"
+                     action="http://localhost:8080/shop/import"
+                     list-type="text">
+            <el-button type="warning">导入</el-button>
+          </el-upload>
         </el-form-item>
       </el-form>
     </el-col>
@@ -22,31 +30,32 @@
       </el-table-column>
       <el-table-column type="index" label="序号" width="60">
       </el-table-column>
-      <el-table-column prop="name" label="店铺名称" width="140" sortable>
+      <el-table-column prop="name" label="店铺名称" width="120" sortable>
       </el-table-column>
-      <el-table-column prop="tel" label="店铺电话" width="140" sortable>
+      <el-table-column prop="tel" label="店铺电话" width="120" sortable>
       </el-table-column>
-      <el-table-column prop="registerTime" label="注册时间" width="180" sortable>
+      <el-table-column prop="registerTime" label="注册时间" width="140" sortable>
       </el-table-column>
       <el-table-column label="状态" width="120" sortable>
         <template scope="scope">
-          <span v-if="scope.row.state === 1" style="color: #50bfff">待审核</span>
-          <span v-else-if="scope.row.state === 2" style="color: #50bfff">待激活</span>
+          <span v-if="scope.row.state === 1" style="color: hotpink">待审核</span>
+          <span v-else-if="scope.row.state === 2" style="color: blue">待激活</span>
           <span v-else-if="scope.row.state === 3" style="color: green">已激活</span>
           <span v-else style="color: red">驳回</span>
         </template>
       </el-table-column>
       <el-table-column prop="admin.username" label="店铺经理" width="120" sortable>
       </el-table-column>
-      <el-table-column prop="logo" label="店铺图标" min-width="160" sortable>
+      <el-table-column prop="logo" label="店铺图标" min-width="120" sortable>
         <template scope="scope">
           <el-image :src="'http://service-file-primary.java.itsource.cn/'+scope.row.logo" style="weight: 40px; height: 40px;"></el-image>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="160">
+      <el-table-column label="操作" width="260">
         <template scope="scope">
           <el-button size="small" @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
           <el-button type="danger" size="small" @click="handleDel(scope.$index, scope.row)">删除</el-button>
+          <el-button size="small" type="warning" @click="handleAudit(scope.$index, scope.row)">店铺审核</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -113,6 +122,20 @@
       </div>
     </el-dialog>
 
+    <!-- 审核模态框 -->
+    <el-dialog title="审核店铺" :visible.sync="shopAuditVisible" :close-on-click-modal="false">
+      <el-form :model="shopAuditLog" label-width="80px"  ref="shopAuditLogForm">
+        <el-form-item label="备注" prop="note">
+          <el-input type="textarea" v-model="shopAuditLog.note"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click.native="shopAuditVisible = false">取消</el-button>
+        <el-button type="primary" @click.native="auditPass">通过</el-button>
+        <el-button type="primary" @click.native="auditReject">驳回</el-button>
+      </div>
+    </el-dialog>
+
   </section>
 </template>
 
@@ -154,7 +177,14 @@ export default {
         address:'',
         logo: null,
         adminId: null
-      }
+      },
+      // 店铺审核实体
+      shopAuditLog: {
+        shopId: null,
+        note:''
+      },
+      // 店铺审核框控制
+      shopAuditVisible: false
     }
   },
   methods: {
@@ -225,7 +255,7 @@ export default {
       }).then(() => {
         this.listLoading = true;
         //NProgress.start();
-        this.$http.delete("shop/" + row.id)
+        this.$http.delete("/shop/" + row.id)
             .then(res => {
               let result = res.data
               // 判断后端删除是否成功
@@ -334,6 +364,40 @@ export default {
           .catch(res => {
             this.$message.error("网络繁忙，请稍后重试！")
           })
+    },
+    //点击店铺审核弹出模态框
+    handleAudit: function (index, row) {
+      this.shopAuditLog.shopId = row.id;
+      this.shopAuditVisible = true;
+    },
+    // 审核驳回
+    auditReject(){
+      this.$http.post("/shop/audit/reject",this.shopAuditLog).then(res=>{
+        if(res.data.success){
+          this.$message.success('驳回成功');
+        }else{
+          this.$message.error('驳回失败');
+        }
+        this.shopAuditVisible = false;
+        this.getShops();
+      })
+    },
+    // 审核通过
+    auditPass(){
+      this.$http.post("/shop/audit/pass",this.shopAuditLog)
+          .then(result=>{
+            result = result.data;
+            if(result.success){
+              this.$message.success('审核通过');
+            }else{
+              this.$message.error('审核失败');
+            }
+            this.shopAuditVisible = false;
+            this.getShops();
+          })
+    },
+    exportShop() {
+      location.href = "http://localhost:8080/shop/export";
     }
   },
   mounted() {

@@ -35,20 +35,44 @@
 
         methods: {
             drawColumnChart() {
-                this.chartColumn = echarts.init(document.getElementById('chartColumn'));
-                this.chartColumn.setOption({
-                  title: { text: 'Column Chart' },
-                  tooltip: {},
-                  xAxis: {
-                      data: ["衬衫", "羊毛衫", "雪纺衫", "裤子", "高跟鞋", "袜子"]
-                  },
-                  yAxis: {},
-                  series: [{
-                      name: '销量',
-                      type: 'bar',
-                      data: [5, 20, 36, 10, 10, 20]
-                    }]
-                });
+              this.$http.get("/echarts/shopStatistics")
+                  .then(res => {
+                    let statistics = res.data;
+                    this.chartColumn = echarts.init(document.getElementById('chartColumn'));
+                    //将状态的1234 - 转成待审核,待激活,激活成功,驳回
+                    for (let i = 0; i < statistics.states.length; i++) {
+                      if(statistics.states[i] == 1){
+                        //替换 i表示下标 1 表示从下标往后替换多少个
+                        statistics.states.splice(i,1,"待审核");
+                      }
+                      if(statistics.states[i] == 2){
+                        statistics.states.splice(i,1,"待激活");
+                      }
+                      if(statistics.states[i] == 3){
+                        statistics.states.splice(i,1,"激活成功");
+                      }
+                      if(statistics.states[i] == 4){
+                        statistics.states.splice(i,1,"驳回");
+                      }
+                    }
+                    this.chartColumn.setOption({
+                      title: { text: '店铺状态比例' },
+                      tooltip: {},
+                      xAxis: {
+                        data: statistics.states
+                      },
+                      yAxis: {},
+                      series: [{
+                        name: '个数',
+                        type: 'bar',
+                        data: statistics.counts
+                      }]
+                    });
+                  })
+                  .catch(res => {
+                    this.$message.error("网络繁忙，请稍后重试！")
+                  })
+
             },
             drawBarChart() {
                 this.chartBar = echarts.init(document.getElementById('chartBar'));

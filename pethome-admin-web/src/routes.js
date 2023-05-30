@@ -7,6 +7,7 @@ import department from "./views/org/Department.vue";
 import shop from "./views/org/Shop.vue";
 import SystemDictionaryType from "./views/sys/SystemDictionaryType.vue";
 import ShopRegister from "./views/ShopRegister.vue";
+import ShopActive from "./views/ShopActive.vue";
 
 let routes = [
     {
@@ -18,6 +19,12 @@ let routes = [
     {
         path: '/shopRegister',
         component: ShopRegister,
+        name: '',
+        hidden: true
+    },
+    {
+        path: '/shopActive',
+        component: ShopActive,
         name: '',
         hidden: true
     },
